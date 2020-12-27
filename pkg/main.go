@@ -11,13 +11,13 @@ import (
 	"os"
 	"os/signal"
 
-	"gitlab.com/Fabian-G/quickshare/pkg/certs"
-	"gitlab.com/Fabian-G/quickshare/pkg/handler"
-	"gitlab.com/Fabian-G/quickshare/pkg/resolve"
+	"github.com/Fabian-G/quickshare/pkg/certs"
+	"github.com/Fabian-G/quickshare/pkg/handler"
+	"github.com/Fabian-G/quickshare/pkg/resolve"
 )
 
 var (
-	inline = flag.Bool("i", false, "If the served content should be marked as inline content (Displayed directly in browser instead of opening a download dialog).")
+	inline    = flag.Bool("i", false, "If the served content should be marked as inline content (Displayed directly in browser instead of opening a download dialog).")
 	limitFlag = flag.Int("l", -1, "Limit number of reqeusts to n")
 	port      = flag.Int("p", 8080, "The port the http server should listen on")
 	encrypt   = flag.Bool("e", false, "Whether or not Transport encryption should be used. If set quickshare will generate a self signed certificate on startup.")

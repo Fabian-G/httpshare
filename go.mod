@@ -1,3 +1,3 @@
-module gitlab.com/Fabian-G/quickshare
+module github.com/Fabian-G/quickshare
 
 go 1.15
