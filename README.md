@@ -19,6 +19,7 @@ quickshare [OPTION...] [FILE...]
 
 Option | Description
 -------|-------------
--l n | Limits the number of requests to n per file. Any subsequent request will receive an unauthorized error
+-i     | If the served content should be marked as inline content (Displayed directly in browser instead of opening a download dialog).
+-l n   | Limits the number of requests to n per file. Any subsequent request will receive an unauthorized error
 -p port | Starts the server on port p
 -e      | Enables TLS Encryption by generating a self signed certificate on startup. The SHA-1 sum of that certificate is printed for sharing with the clients.
