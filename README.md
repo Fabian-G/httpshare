@@ -11,6 +11,12 @@ quickshare myFile.mp4
 
 After that the file will be available at http://yourIp:8080/randomId. The resulting URL is printed for each file. For convenience quickshare looks up your public ip addresse and prints it in the URL. 
 
+## Install
+
+```bash
+go get -u github.com/Fabian-G/quickshare
+```
+
 ## Usage
 
 ```bash
