@@ -11,16 +11,16 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/Fabian-G/quickshare/pkg/certs"
-	"github.com/Fabian-G/quickshare/pkg/handler"
-	"github.com/Fabian-G/quickshare/pkg/resolve"
+	"github.com/Fabian-G/httpshare/pkg/certs"
+	"github.com/Fabian-G/httpshare/pkg/handler"
+	"github.com/Fabian-G/httpshare/pkg/resolve"
 )
 
 var (
 	inline    = flag.Bool("i", false, "If the served content should be marked as inline content (Displayed directly in browser instead of opening a download dialog).")
 	limitFlag = flag.Int("l", -1, "Limit number of reqeusts to n")
 	port      = flag.Int("p", 8080, "The port the http server should listen on")
-	encrypt   = flag.Bool("e", false, "Whether or not Transport encryption should be used. If set quickshare will generate a self signed certificate on startup.")
+	encrypt   = flag.Bool("e", false, "Whether or not Transport encryption should be used. If set httpshare will generate a self signed certificate on startup.")
 )
 
 func assembleHandleFunc(file string) http.HandlerFunc {
@@ -74,7 +74,7 @@ func main() {
 	registerHandlers(ipForURL)
 
 	if *encrypt {
-		tmpDir, err := ioutil.TempDir("", "quickshare_*")
+		tmpDir, err := ioutil.TempDir("", "httpshare_*")
 		if err != nil {
 			log.Fatal("Unable to create temporary directory")
 		}

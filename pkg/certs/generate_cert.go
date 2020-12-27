@@ -65,7 +65,7 @@ func GenerateCert(destDir string, host string) (string, string, error) {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"Quickshare"},
+			Organization: []string{"httpshare"},
 		},
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
