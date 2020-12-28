@@ -27,6 +27,7 @@ Option | Description
 -------|-------------
 -i     | If the served content should be marked as inline content (Displayed directly in browser instead of opening a download dialog whenever possible).
 -l n   | Limits the number of requests to *n* per file. Any subsequent request will receive an unauthorized error
+-t n    | Trust at most *n* clients. This is global and not per file. The first *n* clients (based on IP) will be able to download any file. Any other clients are rejected.
 -p port | Starts the server on port *port*
 -e      | Enables TLS Encryption by generating a self signed certificate on startup. The SHA-1 sum of that certificate is printed for sharing with the clients.
 -r      | If set the generated URLs will contain your public IP Addresse. For that another server will be queried.
