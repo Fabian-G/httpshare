@@ -87,6 +87,9 @@ func main() {
 		}
 		scheduleCleanupOnExit(tmpDir)
 		cert, key, err := certs.GenerateCert(tmpDir, rawIP)
+		if err != nil {
+			log.Fatalf("Unable to create certificate: %s", err)
+		}
 		log.Fatal(http.ListenAndServeTLS(fmt.Sprintf(":%d", *port), cert, key, http.DefaultServeMux))
 	} else {
 		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), http.DefaultServeMux))
