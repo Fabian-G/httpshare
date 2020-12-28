@@ -28,7 +28,7 @@ func (p *PublicIPResolver) Resolve() string {
 	}{}
 	err = json.NewDecoder(res.Body).Decode(ipResponse)
 	if err != nil {
-		return "127.0.0.1"
+		return p.Fallback.Resolve()
 	}
 
 	return ipResponse.IP
