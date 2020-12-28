@@ -29,5 +29,5 @@ Option | Description
 -l n   | Limits the number of requests to *n* per file. Any subsequent request will receive an unauthorized error
 -t n    | Trust at most *n* clients. This is global and not per file. The first *n* clients (based on IP) will be able to download any file. Any other clients are rejected.
 -p port | Starts the server on port *port*
--e      | Enables TLS Encryption by generating a self signed certificate on startup. The SHA-1 sum of that certificate is printed for sharing with the clients.
+-e      | Enables TLS Encryption. The certificate is read from `$USER_CONFIG_DIR/httpshare/{key.pem,cert.pem}`. If no certificate is found there a self signed certificate will be generated.
 -r      | If set the generated URLs will contain your public IP Addresse. For that another server will be queried.
