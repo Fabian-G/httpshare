@@ -41,12 +41,11 @@ func getProtocol() string {
 func registerHandlers(myIP string) {
 	for _, file := range flag.Args() {
 		if s, err := os.Stat(file); os.IsNotExist(err) || !s.Mode().IsRegular() {
-			log.Printf("%s does not exist or is not a regular file", file)
-			continue
+			log.Fatalf("%s does not exist or is not a regular file", file)
 		}
 		id, err := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
 		if err != nil {
-			log.Printf("Failed to generate id for %s", file)
+			log.Fatalf("Failed to generate id for %s", file)
 			continue
 		}
 		urlPath := fmt.Sprintf("/%06x", id)
@@ -71,6 +70,9 @@ func main() {
 	rawIP := resolve.GetMyIP()
 	ipForURL := resolve.FormatIPForURL(rawIP)
 
+	if flag.NArg() == 0 {
+		log.Fatal("You need to specify at least one file")
+	}
 	registerHandlers(ipForURL)
 
 	if *encrypt {
