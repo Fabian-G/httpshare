@@ -21,6 +21,7 @@ var (
 	limitFlag = flag.Int("l", -1, "Limit number of reqeusts to n")
 	port      = flag.Int("p", 8080, "The port the http server should listen on")
 	encrypt   = flag.Bool("e", false, "Whether or not Transport encryption should be used. If set httpshare will generate a self signed certificate on startup.")
+	resolveIP = flag.Bool("r", false, "If set, the generated URLs will contain your public IP Addresse. For that another server will be queried.")
 )
 
 func assembleHandleFunc(file string) http.HandlerFunc {
@@ -67,7 +68,11 @@ func scheduleCleanupOnExit(tmpDir string) {
 
 func main() {
 	flag.Parse()
-	rawIP := resolve.GetMyIP()
+	resolver := resolve.IPResolver(&resolve.LocalIPResolver{})
+	if *resolveIP {
+		resolver = resolve.NewPublicIPResolver(resolver)
+	}
+	rawIP := resolver.Resolve()
 	ipForURL := resolve.FormatIPForURL(rawIP)
 
 	if flag.NArg() == 0 {
