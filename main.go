@@ -9,7 +9,6 @@ import (
 	"math/big"
 	"net/http"
 	"os"
-	"os/signal"
 	"path"
 
 	"github.com/Fabian-G/httpshare/pkg/certs"
