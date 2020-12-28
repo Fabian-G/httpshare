@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"net"
@@ -17,8 +18,15 @@ import (
 	"time"
 )
 
-// GenerateCert generates a new self signed certificate in destDir
-func GenerateCert(destDir string, hostIP string) (string, string, error) {
+// GetCertificate generates a new self signed certificate in destDir
+func GetCertificate(destDir string, hostIP string) (string, string, error) {
+	if isExisting(destDir) {
+		err := printFingerprint(path.Join(destDir, "cert.pem"))
+		if err != nil {
+			return "", "", err
+		}
+		return path.Join(destDir, "cert.pem"), path.Join(destDir, "key.pem"), nil
+	}
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return "", "", fmt.Errorf("Failed to generate private key: %v", err)
@@ -40,12 +48,36 @@ func GenerateCert(destDir string, hostIP string) (string, string, error) {
 
 	err = writePrivateKey(priv, destDir)
 	if err != nil {
-		return "","", err
+		return "", "", err
 	}
 
 	log.Print("Successfully generated certificate. Send the Fingerprint to your clients.\n")
-	log.Printf("Fingerprint is %s", strings.ReplaceAll(fmt.Sprintf("% X", sha1.Sum(derBytes)), " ", ":"))
+	printFingerprint(path.Join(destDir, "cert.pem"))
 	return path.Join(destDir, "cert.pem"), path.Join(destDir, "key.pem"), nil
+}
+
+func printFingerprint(certPath string) error {
+	cert, err := os.Open(certPath)
+	if err != nil {
+		return err
+	}
+	defer cert.Close()
+	pemBytes, err := ioutil.ReadAll(cert)
+	if err != nil {
+		return err
+	}
+	derBytes, _ := pem.Decode(pemBytes)
+	if derBytes == nil {
+		return fmt.Errorf("Could not read cert %s", certPath)
+	}
+	log.Printf("Fingerprint is %s", strings.ReplaceAll(fmt.Sprintf("% X", sha1.Sum(derBytes.Bytes)), " ", ":"))
+	return nil
+}
+
+func isExisting(testDir string) bool {
+	_, certErr := os.Stat(path.Join(testDir, "cert.pem"))
+	_, keyErr := os.Stat(path.Join(testDir, "key.pem"))
+	return !(os.IsNotExist(certErr) && os.IsNotExist(keyErr))
 }
 
 func createTemplate(hostIP string) (x509.Certificate, error) {

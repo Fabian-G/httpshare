@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 
 	"github.com/Fabian-G/httpshare/pkg/certs"
 	"github.com/Fabian-G/httpshare/pkg/handler"
@@ -60,15 +61,22 @@ func registerHandlers(myIP string) {
 	}
 }
 
-func scheduleCleanupOnExit(tmpDir string) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		sig := <-c
-		log.Printf("Received %s cleaning up.", sig)
-		os.RemoveAll(tmpDir)
-		os.Exit(0)
-	}()
+func createConfigDirIfNotExist() string {
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		// No Config dir. Use tmp instead
+		userConfigDir, err = ioutil.TempDir("", "httpshare_*")
+		if err != nil {
+			log.Fatal("Unable to create temporary directory for configuration.")
+		}
+	}
+	httpShareConfigDir := path.Join(userConfigDir, "httpshare")
+	if _, err := os.Stat(httpShareConfigDir); os.IsNotExist(err) {
+		if err := os.Mkdir(httpShareConfigDir, 0777); err != nil {
+			log.Fatal("Could not create config dir")
+		}
+	}
+	return httpShareConfigDir
 }
 
 func main() {
@@ -79,6 +87,7 @@ func main() {
 	}
 	rawIP := resolver.Resolve()
 	ipForURL := resolve.FormatIPForURL(rawIP)
+	httpShareConfigDir := createConfigDirIfNotExist()
 
 	if flag.NArg() == 0 {
 		log.Fatal("You need to specify at least one file")
@@ -86,12 +95,7 @@ func main() {
 	registerHandlers(ipForURL)
 
 	if *encrypt {
-		tmpDir, err := ioutil.TempDir("", "httpshare_*")
-		if err != nil {
-			log.Fatal("Unable to create temporary directory")
-		}
-		scheduleCleanupOnExit(tmpDir)
-		cert, key, err := certs.GenerateCert(tmpDir, rawIP)
+		cert, key, err := certs.GetCertificate(httpShareConfigDir, rawIP)
 		if err != nil {
 			log.Fatalf("Unable to create certificate: %s", err)
 		}
