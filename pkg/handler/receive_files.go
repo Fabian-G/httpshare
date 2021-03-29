@@ -56,6 +56,7 @@ func handleUpload(dir string, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not parse form data", http.StatusBadRequest)
 		return
 	}
+	defer inputFile.Close()
 
 	fullPath := path.Join(dir, header.Filename)
 	if consented := askAndWaitForUserConsent(fullPath, r); !consented {
@@ -70,6 +71,7 @@ func handleUpload(dir string, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "There was an error during upload.", http.StatusInternalServerError)
 		return
 	}
+	defer outputFile.Close()
 
 	_, err = io.Copy(outputFile, inputFile)
 	if err != nil {
