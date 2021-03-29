@@ -32,3 +32,4 @@ Option | Description
 -e      | Enables TLS Encryption. The certificate is read from `$USER_CONFIG_DIR/httpshare/{key.pem,cert.pem}`. If no certificate is found there a self signed certificate will be generated.
 -r      | If set the generated URLs will contain your public IP Addresse. For that another server will be queried.
 -d      | If set to a path, httpshare will enable receive Mode and an upload form will be presented at /upload. Downloads will be saved at specified path. Note that generally speaking a client needs to make 2 requests to upload a file. Therefore specifying a request limit of 1 is not useful.
+-s      | Filename to announce to clients when serving stdin. (use - as file name to serve stdin). 
