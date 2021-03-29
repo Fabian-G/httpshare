@@ -10,12 +10,12 @@ import (
 func LimitRequests(id string, maxRequests int, other http.HandlerFunc) http.HandlerFunc {
 	requests := 0
 	requestCountMutex := sync.Mutex{}
-	
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestCountMutex.Lock()
 		if requests >= maxRequests {
 			log.Printf("Request from %s on %s blocked. Limit reached.\n", r.RemoteAddr, id)
-			http.Error(w, "Download limit reached.", http.StatusUnauthorized)
+			http.Error(w, "Limit reached.", http.StatusUnauthorized)
 			requestCountMutex.Unlock()
 			return
 		}

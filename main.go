@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/Fabian-G/httpshare/pkg/certs"
 	"github.com/Fabian-G/httpshare/pkg/handler"
@@ -19,16 +20,17 @@ import (
 var (
 	inline    = flag.Bool("i", false, "If the served content should be marked as inline content (Displayed directly in browser instead of opening a download dialog).")
 	limitFlag = flag.Int("l", -1, "Limit number of reqeusts to n")
-	tofcFlag = flag.Int("t", -1, "The first n clients are trusted. All other connections will be blocked. This is global and not per file.")
+	tofcFlag  = flag.Int("t", -1, "The first n clients are trusted. All other connections will be blocked. This is global and not per file.")
 	port      = flag.Int("p", 8080, "The port the http server should listen on")
 	encrypt   = flag.Bool("e", false, "Whether or not Transport encryption should be used. If set httpshare will generate a self signed certificate on startup.")
 	resolveIP = flag.Bool("r", false, "If set, the generated URLs will contain your public IP Addresse. For that another server will be queried.")
+	uploadDir = flag.String("d", "", "If set to a path, httpshare will enable receive Mode and an upload form will be presented at /upload. Downloads will be saved at specified path.")
 )
 
-func assembleHandleFunc(file string, tofcHandler *handler.TrustOnFirstConnect) http.HandlerFunc {
-	handleFunc := handler.ServeFile(file, *inline)
+func assembleHandleFunc(endpointId string, tofcHandler *handler.TrustOnFirstConnect, endpoint http.HandlerFunc) http.HandlerFunc {
+	handleFunc := endpoint
 	if *limitFlag >= 0 {
-		handleFunc = handler.LimitRequests(file, *limitFlag, handleFunc)
+		handleFunc = handler.LimitRequests(endpointId, *limitFlag, handleFunc)
 	}
 	if *tofcFlag >= 0 {
 		handleFunc = tofcHandler.Tofc(handleFunc)
@@ -45,19 +47,29 @@ func getProtocol() string {
 
 func registerHandlers(myIP string) {
 	tofcHandler := handler.NewTrustOnFirstConnect(*tofcFlag)
-	for _, file := range flag.Args() {
-		if s, err := os.Stat(file); os.IsNotExist(err) || !s.Mode().IsRegular() {
-			log.Fatalf("%s does not exist or is not a regular file", file)
-		}
-		id, err := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
-		if err != nil {
-			log.Fatalf("Failed to generate id for %s", file)
-			continue
-		}
-		urlPath := fmt.Sprintf("/%06x", id)
-		log.Printf("%s available at %s://%s:%d%s\n", file, getProtocol(), myIP, *port, urlPath)
-		http.HandleFunc(urlPath, assembleHandleFunc(file,tofcHandler))
+	if len(strings.TrimSpace(*uploadDir)) != 0 {
+		enableReceiveMode(tofcHandler)
 	}
+	for _, file := range flag.Args() {
+		registerFileServer(myIP, file, tofcHandler)
+	}
+}
+
+func enableReceiveMode(tofcHandler *handler.TrustOnFirstConnect) {
+	http.HandleFunc("/upload", assembleHandleFunc("upload", tofcHandler, handler.ServeUploadPage(*uploadDir)))
+}
+
+func registerFileServer(myIP string, file string, tofcHandler *handler.TrustOnFirstConnect) {
+	if s, err := os.Stat(file); os.IsNotExist(err) || !s.Mode().IsRegular() {
+		log.Fatalf("%s does not exist or is not a regular file", file)
+	}
+	id, err := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
+	if err != nil {
+		log.Fatalf("Failed to generate id for %s", file)
+	}
+	urlPath := fmt.Sprintf("/%06x", id)
+	log.Printf("%s available at %s://%s:%d%s\n", file, getProtocol(), myIP, *port, urlPath)
+	http.HandleFunc(urlPath, assembleHandleFunc(file, tofcHandler, handler.ServeFile(file, *inline)))
 }
 
 func createConfigDirIfNotExist() string {
@@ -88,8 +100,8 @@ func main() {
 	ipForURL := resolve.FormatIPForURL(rawIP)
 	httpShareConfigDir := createConfigDirIfNotExist()
 
-	if flag.NArg() == 0 {
-		log.Fatal("You need to specify at least one file")
+	if noActionSpecified() {
+		log.Fatal("You need to specify at least one file. Or enable upload mode.")
 	}
 	registerHandlers(ipForURL)
 
@@ -102,4 +114,8 @@ func main() {
 	} else {
 		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), http.DefaultServeMux))
 	}
+}
+
+func noActionSpecified() bool {
+	return flag.NArg() == 0 && len(*uploadDir) == 0
 }
