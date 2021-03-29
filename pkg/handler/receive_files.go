@@ -39,7 +39,7 @@ func serveUploadPage(w http.ResponseWriter) {
 			<form action="upload" method="post" enctype="multipart/form-data">
 				<label for="file">Filename:</label>
 				<input type="file" name="file" id="file"><br>
-				<input type="submit" name="submit" value="Submit">
+				<input type="submit" value="Submit">
 			</form>
 		</body>
 	</html>
@@ -51,14 +51,19 @@ func serveUploadPage(w http.ResponseWriter) {
 }
 
 func handleUpload(dir string, w http.ResponseWriter, r *http.Request) {
-	inputFile, header, err := r.FormFile("file")
+	reader, err := r.MultipartReader()
 	if err != nil {
 		http.Error(w, "Could not parse form data", http.StatusBadRequest)
 		return
 	}
-	defer inputFile.Close()
+	filePart, err := reader.NextPart()
+	if err != nil || filePart.FormName() != "file" {
+		http.Error(w, "Could not parse form data", http.StatusBadRequest)
+		return
+	}
+	defer filePart.Close()
 
-	fullPath := path.Join(dir, header.Filename)
+	fullPath := path.Join(dir, filePart.FileName())
 	if consented := askAndWaitForUserConsent(fullPath, r); !consented {
 		log.Printf("Upload of %s rejected", fullPath)
 		http.Error(w, "Upload rejected.", http.StatusUnauthorized)
@@ -73,7 +78,7 @@ func handleUpload(dir string, w http.ResponseWriter, r *http.Request) {
 	}
 	defer outputFile.Close()
 
-	_, err = io.Copy(outputFile, inputFile)
+	_, err = io.Copy(outputFile, filePart)
 	if err != nil {
 		log.Printf("Could not write to file %s due to: %s", fullPath, err.Error())
 		http.Error(w, "There was an error during upload.", http.StatusInternalServerError)
