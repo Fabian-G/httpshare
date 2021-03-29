@@ -25,6 +25,7 @@ var (
 	encrypt   = flag.Bool("e", false, "Whether or not Transport encryption should be used. If set httpshare will generate a self signed certificate on startup.")
 	resolveIP = flag.Bool("r", false, "If set, the generated URLs will contain your public IP Addresse. For that another server will be queried.")
 	uploadDir = flag.String("d", "", "If set to a path, httpshare will enable receive Mode and an upload form will be presented at /upload. Downloads will be saved at specified path.")
+	stdInName = flag.String("s", "stdin", "Filename to use for serving stdin.")
 )
 
 func assembleHandleFunc(endpointId string, tofcHandler *handler.TrustOnFirstConnect, endpoint http.HandlerFunc) http.HandlerFunc {
@@ -61,7 +62,7 @@ func enableReceiveMode(myIP string, tofcHandler *handler.TrustOnFirstConnect) {
 }
 
 func registerFileServer(myIP string, file string, tofcHandler *handler.TrustOnFirstConnect) {
-	if s, err := os.Stat(file); os.IsNotExist(err) || !s.Mode().IsRegular() {
+	if s, err := os.Stat(file); (os.IsNotExist(err) || !s.Mode().IsRegular()) && file != "-" {
 		log.Fatalf("%s does not exist or is not a regular file", file)
 	}
 	id, err := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
@@ -70,7 +71,12 @@ func registerFileServer(myIP string, file string, tofcHandler *handler.TrustOnFi
 	}
 	urlPath := fmt.Sprintf("/%06x", id)
 	log.Printf("%s available at %s://%s:%d%s\n", file, getProtocol(), myIP, *port, urlPath)
-	http.HandleFunc(urlPath, assembleHandleFunc(file, tofcHandler, handler.ServeFile(file, *inline)))
+
+	if file != "-" {
+		http.HandleFunc(urlPath, assembleHandleFunc(file, tofcHandler, handler.ServeFile(file, *inline)))
+	} else {
+		http.HandleFunc(urlPath, assembleHandleFunc(file, tofcHandler, handler.ServeStdIn(*stdInName, *inline)))
+	}
 }
 
 func createConfigDirIfNotExist() string {
