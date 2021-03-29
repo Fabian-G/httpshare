@@ -61,8 +61,8 @@ func enableReceiveMode(myIP string, tofcHandler *handler.TrustOnFirstConnect) {
 }
 
 func registerFileServer(myIP string, file string, tofcHandler *handler.TrustOnFirstConnect) {
-	if s, err := os.Stat(file); os.IsNotExist(err) || s.Mode().IsDir() {
-		log.Fatalf("%s does not exist or is a directory", file)
+	if s, err := os.Stat(file); os.IsNotExist(err) || !s.Mode().IsRegular() {
+		log.Fatalf("%s does not exist or is not a regular file", file)
 	}
 	id, err := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
 	if err != nil {
