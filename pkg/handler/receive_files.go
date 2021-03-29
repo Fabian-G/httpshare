@@ -51,7 +51,6 @@ func serveUploadPage(w http.ResponseWriter) {
 }
 
 func handleUpload(dir string, w http.ResponseWriter, r *http.Request) {
-	log.Printf("Do you want to accept file....")
 	inputFile, header, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "Could not parse form data", http.StatusBadRequest)

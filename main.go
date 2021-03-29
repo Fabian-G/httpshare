@@ -48,15 +48,16 @@ func getProtocol() string {
 func registerHandlers(myIP string) {
 	tofcHandler := handler.NewTrustOnFirstConnect(*tofcFlag)
 	if len(strings.TrimSpace(*uploadDir)) != 0 {
-		enableReceiveMode(tofcHandler)
+		enableReceiveMode(myIP, tofcHandler)
 	}
 	for _, file := range flag.Args() {
 		registerFileServer(myIP, file, tofcHandler)
 	}
 }
 
-func enableReceiveMode(tofcHandler *handler.TrustOnFirstConnect) {
+func enableReceiveMode(myIP string, tofcHandler *handler.TrustOnFirstConnect) {
 	http.HandleFunc("/upload", assembleHandleFunc("upload", tofcHandler, handler.ServeUploadPage(*uploadDir)))
+	log.Printf("Upload interface available at %s://%s:%d%s\n", getProtocol(), myIP, *port, "/upload")
 }
 
 func registerFileServer(myIP string, file string, tofcHandler *handler.TrustOnFirstConnect) {
